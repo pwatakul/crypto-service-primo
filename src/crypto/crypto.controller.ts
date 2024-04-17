@@ -1,4 +1,10 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 import { CryptoService } from './crypto.service';
 import { ApiResponse, ApiTags, ApiBody } from '@nestjs/swagger';
 import { GetEncryptDataDto } from './dto/get-encrypt-data.dto';
@@ -43,6 +49,7 @@ export class CryptoController {
     status: 400,
     description: 'Bad Request',
   })
+  @UsePipes(new ValidationPipe({ transform: true }))
   getEncryptData(@Body() getEncryptDataDto: GetEncryptDataDto) {
     const payload: string = getEncryptDataDto.payload;
 

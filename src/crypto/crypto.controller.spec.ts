@@ -4,6 +4,7 @@ import { CryptoService } from './crypto.service';
 import { ConfigService } from '@nestjs/config';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
+import { ValidationPipe } from '@nestjs/common';
 
 describe('CryptoController', () => {
   let app: INestApplication;
@@ -32,7 +33,10 @@ describe('CryptoController', () => {
           useValue: mockConfigService,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(ValidationPipe)
+      .useValue(new ValidationPipe({ transform: true }))
+      .compile();
 
     cryptoService = module.get<CryptoService>(CryptoService);
 
@@ -75,15 +79,35 @@ describe('CryptoController', () => {
       });
     });
 
-    it('should return 400 for invalid payload', async () => {
+    it('should return 400 for missing payload', async () => {
       const response = await request(app.getHttpServer())
         .post('/get-encrypt-data')
-        .send({ payload: '' })
-        .expect(400);
+        .send({});
 
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
         statusCode: 400,
-        message: 'Invalid payload length',
+        message: [
+          'payload should not be empty',
+          'payload must be longer than or equal to 1 characters',
+          'payload must be a string',
+        ],
+        error: 'Bad Request',
+      });
+    });
+
+    it('should return 400 for invalid payload length', async () => {
+      const response = await request(app.getHttpServer())
+        .post('/get-encrypt-data')
+        .send({ payload: '' });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({
+        statusCode: 400,
+        message: [
+          'payload should not be empty',
+          'payload must be longer than or equal to 1 characters',
+        ],
         error: 'Bad Request',
       });
     });
